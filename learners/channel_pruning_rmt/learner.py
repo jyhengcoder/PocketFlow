@@ -230,7 +230,7 @@ class ChannelPrunedRmtLearner(AbstractLearner):  # pylint: disable=too-many-inst
 
       # model definition - channel-pruned model
       with tf.variable_scope(self.model_scope_prnd):
-        logits_prnd = self.forward_train(images)
+        logits_prnd = self.forward_train(images,labels) if self.forward_w_labels else self.forward_train(images)
         self.vars_prnd = get_vars_by_scope(self.model_scope_prnd)
         self.global_step = tf.train.get_or_create_global_step()
         self.saver_prnd_train = tf.train.Saver(self.vars_prnd['all'] + [self.global_step])
@@ -353,14 +353,14 @@ class ChannelPrunedRmtLearner(AbstractLearner):  # pylint: disable=too-many-inst
 
       # restore a pre-trained model as full model
       with tf.variable_scope(self.model_scope_full):
-        __ = self.forward_train(images_ph)
+        __ = self.forward_train(images_ph,labels) if self.forward_w_labels else self.forward_train(images_ph)
         vars_full = get_vars_by_scope(self.model_scope_full)
         saver_full = tf.train.Saver(vars_full['all'])
         saver_full.restore(sess, tf.train.latest_checkpoint(os.path.dirname(FLAGS.save_path)))
 
       # restore a pre-trained model as channel-pruned model
       with tf.variable_scope(self.model_scope_prnd):
-        logits_prnd = self.forward_train(images_ph)
+        logits_prnd = self.forward_train(images_ph,labels) if self.forward_w_labels else self.forward_train(images_ph)
         vars_prnd = get_vars_by_scope(self.model_scope_prnd)
         global_step = tf.train.get_or_create_global_step()
         saver_prnd = tf.train.Saver(vars_prnd['all'] + [global_step])
