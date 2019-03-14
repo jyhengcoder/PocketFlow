@@ -494,7 +494,7 @@ class ModelHelper(AbstractModelHelper):
     """Forward computation at training."""
     inputs_dict = {'inputs': inputs, 'objects': objects}
     outputs = forward_fn(inputs_dict, True)
-    self.vars = slim.get_model_variables()
+    self.vars = tf.model_variables() + [tf.train.get_or_create_global_step()]
     return outputs
 
   def forward_eval(self, inputs, data_format='channels_last'):
@@ -548,7 +548,6 @@ class ModelHelper(AbstractModelHelper):
         saver.restore(sess, checkpoint_path)
       else:
         print("___restore from trained model___")
-        model_variables = model_variables + [tf.train.get_or_create_global_step()]
         for var in model_variables:
           print(var.name)
         saver = tf.train.Saver(model_variables)
