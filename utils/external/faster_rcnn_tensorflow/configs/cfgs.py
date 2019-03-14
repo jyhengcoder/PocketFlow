@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, print_function, absolute_import
-import os
 import tensorflow as tf
 
 # ------------------------------------------------
-VERSION = 'MobileNetV2'
-NET_NAME = 'MobilenetV2' #'MobilenetV2'
+NET_NAME = 'resnet_v1_101' #'MobilenetV2'
 ADD_BOX_IN_TENSORBOARD = True
 
 if NET_NAME.startswith("resnet"):
@@ -32,11 +30,14 @@ MUTILPY_BIAS_GRADIENT = None   # 2.0  # if None, will not multipy
 GRADIENT_CLIPPING_BY_NORM = None   # 10.0  if None, will not clip
 
 EPSILON = 1e-5
-# LR = 0.001  # ResNet
-# DECAY_STEP = [50000, 70000]  # ResNet
-LR = 0.0003 # MobileNet\
-DECAY_STEP = [50000, 100000]  # MobileNet
-MAX_ITERATION = 200000
+
+LR = 0.001  # ResNet
+DECAY_STEP = [50000, 70000]  # ResNet
+MAX_ITERATION = 70000 # ResNet
+
+# LR = 0.0003 # MobileNet
+# DECAY_STEP = [50000, 100000]  # MobileNet
+# MAX_ITERATION = 200000 # MobileNet
 
 # -------------------------------------------- Data_preprocess_config
 DATASET_NAME = 'pascal'  # 'ship', 'spacenet', 'pascal', 'coco'

@@ -13,7 +13,7 @@ from tensorflow.contrib.slim.python.slim.nets.resnet_v1 import resnet_v1_block
 # import tfplot as tfp
 
 def resnet_arg_scope(
-        is_training=True, weight_decay=cfgs.WEIGHT_DECAY, batch_norm_decay=0.997,
+        is_training=True,trainable=True,weight_decay=cfgs.WEIGHT_DECAY, batch_norm_decay=0.997,
         batch_norm_epsilon=1e-5, batch_norm_scale=True):
     '''
 
@@ -32,7 +32,7 @@ def resnet_arg_scope(
             [slim.conv2d],
             weights_regularizer=slim.l2_regularizer(weight_decay),
             weights_initializer=slim.variance_scaling_initializer(),
-            trainable=is_training,
+            trainable=trainable,
             activation_fn=tf.nn.relu,
             normalizer_fn=slim.batch_norm,
             normalizer_params=batch_norm_params):

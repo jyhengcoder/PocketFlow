@@ -71,7 +71,7 @@ def build_fastrcnn(is_train, feature_to_cropped, rois, img_shape):
                                        weights_initializer=slim.variance_scaling_initializer(factor=1.0,
                                                                                              mode='FAN_AVG',
                                                                                              uniform=True),
-                                       activation_fn=None, trainable=is_train,
+                                       activation_fn=None,
                                        scope='cls_fc')
 
       bbox_pred = slim.fully_connected(fc_flatten,
@@ -79,7 +79,7 @@ def build_fastrcnn(is_train, feature_to_cropped, rois, img_shape):
                                        weights_initializer=slim.variance_scaling_initializer(factor=1.0,
                                                                                              mode='FAN_AVG',
                                                                                              uniform=True),
-                                       activation_fn=None, trainable=is_train,
+                                       activation_fn=None,
                                        scope='reg_fc')
       # for convient. It also produce (cls_num +1) bboxes
 
@@ -253,16 +253,16 @@ def forward_fn(inputs_dict,is_train):
                            regularizer=slim.l2_regularizer(cfgs.WEIGHT_DECAY)):
       rpn_conv3x3 = slim.conv2d(
         feature_to_cropped, 512, [3, 3],
-        trainable=is_train, weights_initializer=cfgs.INITIALIZER,
+        weights_initializer=cfgs.INITIALIZER,
         activation_fn=tf.nn.relu,
         scope='rpn_conv/3x3')
       num_anchors_per_location = len(cfgs.ANCHOR_SCALES) * len(cfgs.ANCHOR_RATIOS)
       rpn_cls_score = slim.conv2d(rpn_conv3x3, num_anchors_per_location * 2, [1, 1], stride=1,
-                                  trainable=is_train, weights_initializer=cfgs.INITIALIZER,
+                                  weights_initializer=cfgs.INITIALIZER,
                                   activation_fn=None,
                                   scope='rpn_cls_score')
       rpn_box_pred = slim.conv2d(rpn_conv3x3, num_anchors_per_location * 4, [1, 1], stride=1,
-                                 trainable=is_train, weights_initializer=cfgs.BBOX_INITIALIZER,
+                                 weights_initializer=cfgs.BBOX_INITIALIZER,
                                  activation_fn=None,
                                  scope='rpn_bbox_pred')
       rpn_box_pred = tf.reshape(rpn_box_pred, [-1, 4])
@@ -366,7 +366,7 @@ def forward_fn(inputs_dict,is_train):
       tf.summary.image('Compare/final_detection', detections_in_img)
       tf.summary.image('Compare/gtboxes', gtboxes_in_img)
   if is_train:
-    predictions = None
+    predictions = {}
     forward_dict = { "rpn_box_pred": rpn_box_pred,
                      "rpn_bbox_targets": rpn_bbox_targets,
                      "rpn_cls_score": rpn_cls_score,
