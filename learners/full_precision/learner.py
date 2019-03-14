@@ -96,6 +96,8 @@ class FullPrecLearner(AbstractLearner):  # pylint: disable=too-many-instance-att
     eval_rslts = np.zeros((nb_iters, len(self.eval_op)))
     self.dump_n_eval(outputs=None, action='init')
     for idx_iter in range(nb_iters):
+      if (idx_iter + 1) % 100 == 0:
+        tf.logging.info('process the %d-th mini-batch for evaluation' % (idx_iter + 1))
       eval_rslts[idx_iter], outputs = self.sess_eval.run([self.eval_op, self.outputs_eval])
       self.dump_n_eval(outputs=outputs, action='dump')
     self.dump_n_eval(outputs=None, action='eval')
@@ -112,6 +114,7 @@ class FullPrecLearner(AbstractLearner):  # pylint: disable=too-many-instance-att
     with tf.Graph().as_default():
       # TensorFlow session
       config = tf.ConfigProto()
+      config.gpu_options.allow_growth = True  # pylint: disable=no-member
       config.gpu_options.visible_device_list = str(mgw.local_rank() if FLAGS.enbl_multi_gpu else 0)  # pylint: disable=no-member
       sess = tf.Session(config=config)
 
