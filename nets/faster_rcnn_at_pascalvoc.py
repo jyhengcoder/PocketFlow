@@ -540,7 +540,7 @@ class ModelHelper(AbstractModelHelper):
         print('___restore from rpn___')
 
         restore_variables = [var for var in model_variables if not var.name.startswith(self.model_scope + 'FastRCNN_Head')] + \
-                            [slim.get_or_create_global_step()]
+                            [tf.train.get_or_create_global_step()]
         for var in restore_variables:
           print(var.name)
         saver = tf.train.Saver()
@@ -548,6 +548,7 @@ class ModelHelper(AbstractModelHelper):
         saver.restore(sess, checkpoint_path)
       else:
         print("___restore from trained model___")
+        model_variables = model_variables + [tf.train.get_or_create_global_step()]
         for var in model_variables:
           print(var.name)
         saver = tf.train.Saver(model_variables)
