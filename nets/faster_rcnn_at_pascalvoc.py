@@ -15,6 +15,7 @@ from utils.external.faster_rcnn_tensorflow.preprocessing.faster_rcnn_preprocessi
 
 from utils.external.faster_rcnn_tensorflow.net import resnet_faster_rcnn as resnet
 from utils.external.faster_rcnn_tensorflow.net import mobilenet_v2_faster_rcnn as mobilenet_v2
+from utils.external.faster_rcnn_tensorflow.net import vgg_16_faster_rcnn as vgg_16
 
 from utils.external.faster_rcnn_tensorflow.utility import anchor_utils, encode_and_decode, boxes_utils
 from utils.external.faster_rcnn_tensorflow.configs import cfgs
@@ -35,11 +36,15 @@ tf.app.flags.DEFINE_string('outputs_dump_dir', './f_rcnn_outputs/', 'outputs\'s 
 # checkpoint related configuration
 tf.app.flags.DEFINE_string('backbone_ckpt_dir', './backbone_models/',
                            'The backbone model\'s (e.g. VGG-16) checkpoint directory')
+tf.app.flags.DEFINE_float('loss_w_dcy', 5e-4, 'weight decaying loss\'s coefficient')
+
 FLAGS = tf.app.flags.FLAGS
 
 def build_base_network(inputs, is_train):
   if cfgs.NET_NAME.startswith('resnet_v1'):
     return resnet.resnet_base(inputs, scope_name=cfgs.NET_NAME, is_training=is_train)
+  elif cfgs.NET_NAME.startswith('vgg_16'):
+    return vgg_16.vgg_base(inputs, scope_name=cfgs.NET_NAME, is_training=is_train)
   elif cfgs.NET_NAME.startswith('MobilenetV2'):
     return mobilenet_v2.mobilenetv2_base(inputs, is_training=is_train)
   else:
@@ -56,6 +61,10 @@ def build_fastrcnn(is_train, feature_to_cropped, rois, img_shape):
       fc_flatten = resnet.restnet_head(input=pooled_features,
                                         is_training=is_train,
                                         scope_name=cfgs.NET_NAME)
+    elif cfgs.NET_NAME.startswith('vgg_16'):
+      fc_flatten = vgg_16.vgg_head(inputs=pooled_features,
+                                  scope_name=cfgs.NET_NAME,
+                                  is_training=is_train)
     elif cfgs.NET_NAME.startswith('Mobile'):
       fc_flatten = mobilenet_v2.mobilenetv2_head(inputs=pooled_features,
                                                    is_training=is_train)
@@ -494,7 +503,8 @@ class ModelHelper(AbstractModelHelper):
     """Forward computation at training."""
     inputs_dict = {'inputs': inputs, 'objects': objects}
     outputs = forward_fn(inputs_dict, True)
-    self.vars = tf.model_variables() + [tf.train.get_or_create_global_step()]
+    # self.vars = tf.model_variables() + [tf.train.get_or_create_global_step()]
+    self.vars = tf.model_variables()
     return outputs
 
   def forward_eval(self, inputs, data_format='channels_last'):
@@ -529,8 +539,8 @@ class ModelHelper(AbstractModelHelper):
     """Initialize the model for warm-start.
 
     Description:
-    * We use a pre-trained ImageNet classification model to initialize the backbone part of the SSD
-      model for feature extraction. If the SSD model's checkpoint files already exist, then skip.
+    * We use a pre-trained ImageNet classification model to initialize the backbone part of the Faster RCNN
+      model for feature extraction. If the  Faster RCNN model's checkpoint files already exist, then skip.
     """
     # early return if checkpoint files already exist
     checkpoint_path = tf.train.latest_checkpoint(os.path.dirname(FLAGS.save_path))
@@ -556,6 +566,8 @@ class ModelHelper(AbstractModelHelper):
       print("model restore from :", checkpoint_path)
     else:
       if cfgs.NET_NAME.startswith("resnet"):
+        weights_name = cfgs.NET_NAME
+      elif cfgs.NET_NAME.startswith("vgg_16"):
         weights_name = cfgs.NET_NAME
       elif cfgs.NET_NAME.startswith("MobilenetV2"):
         weights_name = "mobilenet/mobilenet_v2_1.0_224"
@@ -604,7 +616,7 @@ class ModelHelper(AbstractModelHelper):
         print("var_in_ckpt: ", key)
         print(20 * "___")
       # restore variables from checkpoint files
-      saver = tf.train.Saver(restore_variables, reshape=False)
+      saver = tf.train.Saver(restore_variables, reshape=True)
       saver.build()
       saver.restore(sess, checkpoint_path)
       print(20 * "****")
